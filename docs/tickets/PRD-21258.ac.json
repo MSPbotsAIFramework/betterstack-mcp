@@ -1,0 +1,260 @@
+[
+  {
+    "id": "TC-BS-001",
+    "ac": "AC1",
+    "text": "Given a valid team token, When betterstack_list_monitors is called with no filters, Then it returns up to 50 monitors (id, url, pronounceable_name, monitor_type, status, paused) and has_more/next_cursor when truncated",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_list_monitors_default_limit_and_fields"
+    ]
+  },
+  {
+    "id": "TC-BS-002",
+    "ac": "AC1",
+    "text": "Given limit=500 is requested, When betterstack_list_monitors runs, Then the service clamps the upstream per_page to 200 and never requests or returns more than 200 monitors in one call",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_list_monitors_clamps_limit_to_200"
+    ]
+  },
+  {
+    "id": "TC-BS-003",
+    "ac": "AC1",
+    "text": "Given a url filter that matches no monitor, When betterstack_list_monitors runs, Then it returns an empty list, not a not_found error",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_list_monitors_empty_result_is_not_an_error"
+    ]
+  },
+  {
+    "id": "TC-BS-004",
+    "ac": "AC2",
+    "text": "Given an existing monitor id, When betterstack_get_monitor is called, Then it returns that monitor's detail fields",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_get_monitor_returns_detail"
+    ]
+  },
+  {
+    "id": "TC-BS-005",
+    "ac": "AC2",
+    "text": "Given a monitor id that does not exist upstream (404), When betterstack_get_monitor is called, Then the tool returns {\"error\":{\"code\":\"not_found\",...}}",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_get_monitor_not_found_maps_404"
+    ]
+  },
+  {
+    "id": "TC-BS-006",
+    "ac": "AC3",
+    "text": "Given required fields (url, monitor_type, pronounceable_name), When betterstack_create_monitor is called, Then a monitor is created and the new monitor object is returned",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_create_monitor_happy_path"
+    ]
+  },
+  {
+    "id": "TC-BS-007",
+    "ac": "AC3",
+    "text": "Given the url field is missing, When betterstack_create_monitor is called, Then it returns {\"error\":{\"code\":\"invalid_argument\",...}} without calling the upstream API",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_create_monitor_missing_url_is_invalid_argument"
+    ]
+  },
+  {
+    "id": "TC-BS-008",
+    "ac": "AC4",
+    "text": "Given an existing monitor id and paused=true, When betterstack_update_monitor is called, Then the monitor is paused and the updated object is returned",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_update_monitor_pauses_it"
+    ]
+  },
+  {
+    "id": "TC-BS-009",
+    "ac": "AC4",
+    "text": "Given a monitor id that does not exist, When betterstack_update_monitor is called, Then it returns a not_found error envelope",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_update_monitor_not_found"
+    ]
+  },
+  {
+    "id": "TC-BS-010",
+    "ac": "AC5",
+    "text": "Given an existing monitor id, When betterstack_delete_monitor is called, Then the monitor is deleted and a success confirmation is returned; the tool is annotated destructiveHint=true and only accepts one explicit id, never a filter",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_delete_monitor_requires_explicit_id"
+    ]
+  },
+  {
+    "id": "TC-BS-011",
+    "ac": "AC5",
+    "text": "Given a monitor id that does not exist, When betterstack_delete_monitor is called, Then it returns a not_found error envelope and does not raise",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_delete_monitor_not_found"
+    ]
+  },
+  {
+    "id": "TC-BS-012",
+    "ac": "AC6",
+    "text": "Given incidents exist for the team, When betterstack_list_incidents is called with resolved=false, Then only unresolved incidents are returned with id/status/started_at/acknowledged_at/resolved_at",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_list_incidents_filters_by_resolved"
+    ]
+  },
+  {
+    "id": "TC-BS-013",
+    "ac": "AC6",
+    "text": "Given a monitor_id filter that matches no incident, When betterstack_list_incidents is called, Then it returns an empty list, not a not_found error",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_list_incidents_empty_result_is_not_an_error"
+    ]
+  },
+  {
+    "id": "TC-BS-014",
+    "ac": "AC7",
+    "text": "Given an existing incident id, When betterstack_get_incident is called, Then it returns the incident detail including status and timestamps",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_get_incident_returns_detail"
+    ]
+  },
+  {
+    "id": "TC-BS-015",
+    "ac": "AC7",
+    "text": "Given an incident id that does not exist, When betterstack_get_incident is called, Then it returns a not_found error envelope",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_get_incident_not_found"
+    ]
+  },
+  {
+    "id": "TC-BS-016",
+    "ac": "AC8",
+    "text": "Given an unacknowledged incident, When betterstack_acknowledge_incident is called twice in a row, Then both calls succeed (the second is a no-op success, not an error)",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_acknowledge_incident_is_idempotent"
+    ]
+  },
+  {
+    "id": "TC-BS-017",
+    "ac": "AC9",
+    "text": "Given an acknowledged incident, When betterstack_resolve_incident is called, Then the incident's status becomes resolved in the returned object",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_resolve_incident_happy_path"
+    ]
+  },
+  {
+    "id": "TC-BS-018",
+    "ac": "AC10",
+    "text": "Given the team has on-call schedules configured, When betterstack_list_oncall_schedules is called, Then it returns each schedule's id and name, paginated at <=50 per call",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_oncall.py::test_list_oncall_schedules"
+    ]
+  },
+  {
+    "id": "TC-BS-019",
+    "ac": "AC11",
+    "text": "Given schedule_id=\"default\" and no date range, When betterstack_list_oncall_events is called, Then it returns the events covering now, each with the on-call user name and the shift's start/end time",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_oncall.py::test_list_oncall_events_default_schedule_now"
+    ]
+  },
+  {
+    "id": "TC-BS-020",
+    "ac": "AC11",
+    "text": "Given a schedule_id that does not exist, When betterstack_list_oncall_events is called, Then it returns a not_found error envelope",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_oncall.py::test_list_oncall_events_unknown_schedule_not_found"
+    ]
+  },
+  {
+    "id": "TC-BS-021",
+    "ac": "AC12",
+    "text": "Given a /mcp request with no X-Betterstack-Api-Token header, When any tool is invoked, Then the middleware returns HTTP 401 listing the required header name(s) before any tool code runs",
+    "type": "auto",
+    "tests": [
+      "tests/test_middleware.py::test_missing_credential_header_returns_401_with_header_name"
+    ]
+  },
+  {
+    "id": "TC-BS-022",
+    "ac": "AC13",
+    "text": "Given the upstream API returns 401 for the supplied token, When a tool calls it, Then the tool returns {\"error\":{\"code\":\"unauthorized\",\"retryable\":false}}",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_error_mapping.py::test_upstream_401_maps_to_unauthorized"
+    ]
+  },
+  {
+    "id": "TC-BS-023",
+    "ac": "AC14",
+    "text": "Given the upstream API returns 429, When a tool calls it, Then after respecting Retry-After and the configured retry budget it returns {\"error\":{\"code\":\"rate_limited\",\"retryable\":true}} if still failing",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_error_mapping.py::test_upstream_429_retries_then_rate_limited"
+    ]
+  },
+  {
+    "id": "TC-BS-024",
+    "ac": "AC14",
+    "text": "Given the upstream API times out or returns 5xx, When a tool calls it, Then it returns {\"error\":{\"code\":\"upstream_error\",\"retryable\":true}} and the message does not include the raw upstream response body",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_error_mapping.py::test_upstream_5xx_and_timeout_map_to_upstream_error"
+    ]
+  },
+  {
+    "id": "TC-BS-025",
+    "ac": "AC15",
+    "text": "Given two concurrent /mcp requests carrying different tenants' X-Betterstack-Api-Token values, When both are in flight at once, Then each request's outbound call uses only its own token and neither response contains data fetched with the other tenant's token (no module-level cache, no global credential variable)",
+    "type": "auto",
+    "tests": [
+      "tests/test_middleware.py::test_concurrent_requests_do_not_leak_credentials_across_tenants"
+    ]
+  },
+  {
+    "id": "TC-BS-026",
+    "ac": "AC16",
+    "text": "Given a tool call is made and logged, When the captured structured log output is inspected, Then it contains no Authorization/X-Betterstack-Api-Token value and no full upstream response body",
+    "type": "auto",
+    "tests": [
+      "tests/test_logging.py::test_logs_never_contain_the_credential_header_value"
+    ]
+  },
+  {
+    "id": "TC-BS-027",
+    "ac": "AC17",
+    "text": "Given the upstream BetterStack API is unreachable, When GET /health is called, Then it still returns HTTP 200 with body {\"status\":\"ok\"} because the probe is purely local",
+    "type": "auto",
+    "tests": [
+      "tests/test_health.py::test_health_is_local_and_independent_of_upstream"
+    ]
+  },
+  {
+    "id": "TC-BS-028",
+    "ac": "AC1",
+    "type": "manual",
+    "text": "End-to-end smoke against a real BetterStack team token: initialize -> tools/list -> tools/call for betterstack_list_monitors and betterstack_list_oncall_schedules",
+    "steps": [
+      "Obtain a real BetterStack API token (Global or team-scoped) from a BetterStack account",
+      "Run the container locally per README with MCP_HTTP_PORT=8080",
+      "curl POST /mcp with header X-Betterstack-Api-Token: <token>, body {\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",...} then {\"method\":\"tools/list\"}",
+      "curl POST /mcp tools/call for betterstack_list_monitors with no args, then betterstack_list_oncall_schedules with no args"
+    ],
+    "expect": "tools/list returns all 11 betterstack_* tools with non-empty descriptions; both tools/call responses are HTTP 200 with a JSON body containing a data-shaped list (possibly empty if the team has no monitors/schedules yet), not an error envelope",
+    "result": "untested",
+    "notes": "needs a real vendor account; not a release blocker per vendor-mcp-development SOP section 'no test account required to publish to INT' -- run this once a BetterStack trial/team token is available and record the result in Self-test"
+  }
+]
