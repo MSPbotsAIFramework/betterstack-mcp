@@ -1,0 +1,10 @@
+.venv
+.env
+.git
+.pytest_cache
+.ruff_cache
+__pycache__
+tests/
+docs/
+# NOTE: do not exclude README.md -- pyproject.toml declares readme = "README.md"
+# and hatchling needs it present in the build context (see PRD-21229 regression).
