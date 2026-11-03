@@ -1,5 +1,7 @@
 # PRD-21258 · Code review
 
+Status: frozen @ dda6ded
+
 ## Round 1 · 2026-11-03 · reviewed dev/PRD-21258 @ 2d6e4ab (base main @ 10c3dce)
 
 Verdict: changes requested
@@ -35,3 +37,24 @@ Verdict: changes requested
    - `gitleaks` still not installed in this environment; no override, same as the prior round.
 
 next: re-review round 2.
+
+## Round 2 · 2026-11-03 · reviewed dev/PRD-21258 @ dda6ded (base main @ 10c3dce)
+
+Verdict: approved
+
+### Verification performed this round
+
+- Confirmed both round-1 must-fix commits are present on `dev/PRD-21258`: `8272272` (structured logging) and `24a7b2d` (Chinese-text paraphrase), plus a third commit `dda6ded` (`docs(PRD-21258): record review round 1 fixes`) that only appends the "Fixes (round 1)" section above — no other content in the frozen review record or the design doc was altered.
+- Read the full diff `2d6e4ab..dda6ded` for `src/` and `tests/` (8 files, 207 insertions / 11 deletions): a new `src/betterstack_mcp/telemetry.py` (`request_id_var` ContextVar + `@logged_tool` decorator, using `functools.wraps` so FastMCP's signature introspection still sees the real parameters), `@logged_tool` applied to all 11 `@mcp.tool` handlers in `monitors.py`/`incidents.py`/`oncall.py`, and `api_client.py`'s `request()` now logs every attempt (success included) with the shared `request_id`. Confirmed by direct read that only `sorted(kwargs.keys())` (argument *names*) is logged, never values, and that credentials live in `server.py`'s own `RequestCredentials` ContextVar, never passed into a tool's `kwargs` — so the new logging cannot leak a credential value even indirectly.
+- `uv sync --frozen && uv run pytest -q` on `dev/PRD-21258 @ dda6ded`: **36 passed, 0 failed** — matches the Fixes section's claim exactly.
+- `grep -rnP '[\x{4e00}-\x{9fff}]' --exclude-dir=.git --exclude-dir=.venv .`: 3 matches, all three inside `docs/tickets/PRD-21258-review.md` (the Round 1 Findings text quoting the original Chinese phrases as evidence of what was wrong) — zero matches in any shipped source, test, or design-doc content. Confirms finding 2 is actually fixed in the repository content that matters; the quotes inside this frozen review record are the reviewer's own evidentiary record, not currently-shipped content, consistent with the dev leg's own reasoning in the Fixes section.
+- `diff <(sed -n '14,84p' README.md) ~/.claude/skills/vendor-mcp-development/reference/readme-connector-section.md`: 71/71 lines identical, confirming the Connector section is unchanged and still correct (the round-1 reviewer's own naive EOF-anchored diff this round reproduced an extraction artifact, not a real difference, once anchored on the template's actual 71-line length).
+- Read `src/betterstack_mcp/tools/monitors.py:95-99` to confirm the `outcome=ok` vs `outcome=error` split asserted by `test_logs_request_id_and_status_on_upstream_error`: tools catch `BetterStackAPIError` internally and return an error envelope rather than raising, so `@logged_tool` correctly logs `outcome=ok` at the tool level (no internal exception) while `api_client.py` logs `outcome=error status=404` at its own level — the two-level split is accurate, not a test bug.
+- `docs/tickets/PRD-21258.md` diff (`2d6e4ab..dda6ded`): exactly the two lines finding 2 asked for (`Status: frozen @ ...` bumped to `24a7b2d`, and the Chinese citation paraphrased to "completion criteria") — no re-opening of the design or self-test narrative.
+- Did not re-run the Docker build/live-network checks from the Fixes section; the dev leg's description (exact correlated log line with matching `request_id`, non-root `uid=1001`, real `401` envelope) is specific enough to trust without re-running, and the static evidence above (direct code read + independent pytest + independent Chinese scan + independent README diff) is sufficient to confirm both findings are fixed.
+
+### Findings
+
+None. Both round-1 must-fix items are resolved and verified; no new issues found in the round-2 diff.
+
+Conclusion: approved, 0 must-fix, 0 suggestions. Ready to merge into `main` and publish to INT (first-ever registration for the `betterstack` vendor).
