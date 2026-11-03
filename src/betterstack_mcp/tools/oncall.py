@@ -15,6 +15,7 @@ from mcp.types import ToolAnnotations
 
 from betterstack_mcp.api_client import BetterStackClient
 from betterstack_mcp.errors import BetterStackAPIError, error_from_api_exception
+from betterstack_mcp.telemetry import logged_tool
 from betterstack_mcp.tools._pagination import (
     clamp_limit,
     flatten_resource,
@@ -33,6 +34,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         description="List BetterStack on-call schedules (id and name only).",
         annotations=ToolAnnotations(readOnlyHint=True),
     )
+    @logged_tool
     async def betterstack_list_oncall_schedules(limit: int | None = 50, cursor: str | None = None) -> str:
         """List on-call schedules.
 
@@ -67,6 +69,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         ),
         annotations=ToolAnnotations(readOnlyHint=True),
     )
+    @logged_tool
     async def betterstack_list_oncall_events(
         schedule_id: str = "default",
         from_date: str | None = None,

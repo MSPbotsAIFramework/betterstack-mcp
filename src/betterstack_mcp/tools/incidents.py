@@ -11,6 +11,7 @@ from mcp.types import ToolAnnotations
 
 from betterstack_mcp.api_client import BetterStackClient
 from betterstack_mcp.errors import BetterStackAPIError, error_from_api_exception
+from betterstack_mcp.telemetry import logged_tool
 from betterstack_mcp.tools._pagination import (
     clamp_limit,
     flatten_resource,
@@ -38,6 +39,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         ),
         annotations=ToolAnnotations(readOnlyHint=True),
     )
+    @logged_tool
     async def betterstack_list_incidents(
         monitor_id: str | None = None,
         resolved: bool | None = None,
@@ -92,6 +94,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         description="Get one BetterStack incident by id, including status and timestamps.",
         annotations=ToolAnnotations(readOnlyHint=True),
     )
+    @logged_tool
     async def betterstack_get_incident(id: str) -> str:
         """Get an incident's detail.
 
@@ -113,6 +116,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         ),
         annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True),
     )
+    @logged_tool
     async def betterstack_acknowledge_incident(id: str) -> str:
         """Acknowledge an incident.
 
@@ -131,6 +135,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         description="Resolve a BetterStack incident, closing out the triage loop.",
         annotations=ToolAnnotations(readOnlyHint=False, idempotentHint=True),
     )
+    @logged_tool
     async def betterstack_resolve_incident(id: str) -> str:
         """Resolve an incident.
 

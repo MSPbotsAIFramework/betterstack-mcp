@@ -11,6 +11,7 @@ from mcp.types import ToolAnnotations
 
 from betterstack_mcp.api_client import BetterStackClient
 from betterstack_mcp.errors import BetterStackAPIError, error_envelope, error_from_api_exception
+from betterstack_mcp.telemetry import logged_tool
 from betterstack_mcp.tools._pagination import (
     clamp_limit,
     flatten_resource,
@@ -38,6 +39,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         ),
         annotations=ToolAnnotations(readOnlyHint=True),
     )
+    @logged_tool
     async def betterstack_list_monitors(
         url: str | None = None,
         pronounceable_name: str | None = None,
@@ -81,6 +83,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         description="Get one BetterStack monitor by id. Returns not_found if it does not exist.",
         annotations=ToolAnnotations(readOnlyHint=True),
     )
+    @logged_tool
     async def betterstack_get_monitor(id: str) -> str:
         """Get a monitor's detail fields.
 
@@ -99,6 +102,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         description="Create a new BetterStack uptime monitor for a URL.",
         annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False),
     )
+    @logged_tool
     async def betterstack_create_monitor(
         url: str,
         monitor_type: str,
@@ -138,6 +142,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         ),
         annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False),
     )
+    @logged_tool
     async def betterstack_update_monitor(
         id: str,
         paused: bool | None = None,
@@ -175,6 +180,7 @@ def register(mcp: FastMCP, client_factory: Callable[[], BetterStackClient]) -> N
         ),
         annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True),
     )
+    @logged_tool
     async def betterstack_delete_monitor(id: str) -> str:
         """Delete a monitor by id.
 
