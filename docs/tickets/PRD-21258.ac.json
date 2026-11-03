@@ -1,0 +1,314 @@
+[
+  {
+    "id": "TC-BS-001",
+    "ac": "AC1",
+    "text": "Given a valid team token, When betterstack_list_monitors is called with no filters, Then it returns up to 50 monitors (id, url, pronounceable_name, monitor_type, status, paused) and has_more/next_cursor when truncated",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_list_monitors_default_limit_and_fields"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v (dev/PRD-21258 @ ea1): tests/tools/test_monitors.py::test_list_monitors_default_limit_and_fields PASSED. Asserts outbound per_page=50 and the exact flattened field set per returned monitor."
+  },
+  {
+    "id": "TC-BS-002",
+    "ac": "AC1",
+    "text": "Given limit=500 is requested, When betterstack_list_monitors runs, Then the service clamps the upstream per_page to 200 and never requests or returns more than 200 monitors in one call",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_list_monitors_clamps_limit_to_200"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_list_monitors_clamps_limit_to_200 PASSED. Asserts the respx-captured outbound request has per_page=200 when limit=500 is requested."
+  },
+  {
+    "id": "TC-BS-003",
+    "ac": "AC1",
+    "text": "Given a url filter that matches no monitor, When betterstack_list_monitors runs, Then it returns an empty list, not a not_found error",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_list_monitors_empty_result_is_not_an_error"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_list_monitors_empty_result_is_not_an_error PASSED. Asserts result == {data: [], has_more: false, next_cursor: null} (no error key)."
+  },
+  {
+    "id": "TC-BS-004",
+    "ac": "AC2",
+    "text": "Given an existing monitor id, When betterstack_get_monitor is called, Then it returns that monitor's detail fields",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_get_monitor_returns_detail"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_get_monitor_returns_detail PASSED."
+  },
+  {
+    "id": "TC-BS-005",
+    "ac": "AC2",
+    "text": "Given a monitor id that does not exist upstream (404), When betterstack_get_monitor is called, Then the tool returns {\"error\":{\"code\":\"not_found\",...}}",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_get_monitor_not_found_maps_404"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_get_monitor_not_found_maps_404 PASSED. Also confirmed live against the real BetterStack API on 2026-11-02 (docker container, placeholder token): a GET that the real API rejected came back mapped to our envelope shape (see Self-test section of PRD-21258.md for the exact curl/response)."
+  },
+  {
+    "id": "TC-BS-006",
+    "ac": "AC3",
+    "text": "Given required fields (url, monitor_type, pronounceable_name), When betterstack_create_monitor is called, Then a monitor is created and the new monitor object is returned",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_create_monitor_happy_path"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_create_monitor_happy_path PASSED. Asserts both the returned object and the exact JSON body sent upstream."
+  },
+  {
+    "id": "TC-BS-007",
+    "ac": "AC3",
+    "text": "Given the url field is missing, When betterstack_create_monitor is called, Then it returns {\"error\":{\"code\":\"invalid_argument\",...}} without calling the upstream API",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_create_monitor_missing_url_is_invalid_argument"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_create_monitor_missing_url_is_invalid_argument PASSED. 'Missing' is interpreted as an empty string: url is a contractually required MCP tool parameter (see tools/list snapshot, TC-BS-021-adjacent), so an entirely absent argument is rejected by protocol-level JSON-schema validation before our code runs -- the test instead passes url=\"\" and asserts our own code returns invalid_argument and respx route.called is False (upstream never hit). Noted in the Self-test section as an interpretation call, not a change to the AC."
+  },
+  {
+    "id": "TC-BS-008",
+    "ac": "AC4",
+    "text": "Given an existing monitor id and paused=true, When betterstack_update_monitor is called, Then the monitor is paused and the updated object is returned",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_update_monitor_pauses_it"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_update_monitor_pauses_it PASSED. Asserts result.paused is true and the PATCH body sent was exactly {\"paused\": true}."
+  },
+  {
+    "id": "TC-BS-009",
+    "ac": "AC4",
+    "text": "Given a monitor id that does not exist, When betterstack_update_monitor is called, Then it returns a not_found error envelope",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_update_monitor_not_found"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_update_monitor_not_found PASSED."
+  },
+  {
+    "id": "TC-BS-010",
+    "ac": "AC5",
+    "text": "Given an existing monitor id, When betterstack_delete_monitor is called, Then the monitor is deleted and a success confirmation is returned; the tool is annotated destructiveHint=true and only accepts one explicit id, never a filter",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_delete_monitor_requires_explicit_id"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_delete_monitor_requires_explicit_id PASSED. Asserts result == {deleted: true, id: \"42\"}, tool.annotations.destructiveHint is True, and the input schema's only required param is id (no filter-shaped param exists on this tool at all)."
+  },
+  {
+    "id": "TC-BS-011",
+    "ac": "AC5",
+    "text": "Given a monitor id that does not exist, When betterstack_delete_monitor is called, Then it returns a not_found error envelope and does not raise",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_monitors.py::test_delete_monitor_not_found"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_monitors.py::test_delete_monitor_not_found PASSED. No exception propagated out of call_tool; result is the not_found envelope."
+  },
+  {
+    "id": "TC-BS-012",
+    "ac": "AC6",
+    "text": "Given incidents exist for the team, When betterstack_list_incidents is called with resolved=false, Then only unresolved incidents are returned with id/status/started_at/acknowledged_at/resolved_at",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_list_incidents_filters_by_resolved"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_incidents.py::test_list_incidents_filters_by_resolved PASSED. Asserts outbound resolved=false query param and the returned fields."
+  },
+  {
+    "id": "TC-BS-013",
+    "ac": "AC6",
+    "text": "Given a monitor_id filter that matches no incident, When betterstack_list_incidents is called, Then it returns an empty list, not a not_found error",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_list_incidents_empty_result_is_not_an_error"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_incidents.py::test_list_incidents_empty_result_is_not_an_error PASSED."
+  },
+  {
+    "id": "TC-BS-014",
+    "ac": "AC7",
+    "text": "Given an existing incident id, When betterstack_get_incident is called, Then it returns the incident detail including status and timestamps",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_get_incident_returns_detail"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_incidents.py::test_get_incident_returns_detail PASSED."
+  },
+  {
+    "id": "TC-BS-015",
+    "ac": "AC7",
+    "text": "Given an incident id that does not exist, When betterstack_get_incident is called, Then it returns a not_found error envelope",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_get_incident_not_found"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_incidents.py::test_get_incident_not_found PASSED."
+  },
+  {
+    "id": "TC-BS-016",
+    "ac": "AC8",
+    "text": "Given an unacknowledged incident, When betterstack_acknowledge_incident is called twice in a row, Then both calls succeed (the second is a no-op success, not an error)",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_acknowledge_incident_is_idempotent"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_incidents.py::test_acknowledge_incident_is_idempotent PASSED. Calls the tool twice against the same respx mock; asserts neither response has an error key and tool.annotations.idempotentHint is True."
+  },
+  {
+    "id": "TC-BS-017",
+    "ac": "AC9",
+    "text": "Given an acknowledged incident, When betterstack_resolve_incident is called, Then the incident's status becomes resolved in the returned object",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_incidents.py::test_resolve_incident_happy_path"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_incidents.py::test_resolve_incident_happy_path PASSED."
+  },
+  {
+    "id": "TC-BS-018",
+    "ac": "AC10",
+    "text": "Given the team has on-call schedules configured, When betterstack_list_oncall_schedules is called, Then it returns each schedule's id and name, paginated at <=50 per call",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_oncall.py::test_list_oncall_schedules"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_oncall.py::test_list_oncall_schedules PASSED. Asserts outbound per_page=50 and result.data == [{id, name}, ...]."
+  },
+  {
+    "id": "TC-BS-019",
+    "ac": "AC11",
+    "text": "Given schedule_id=\"default\" and no date range, When betterstack_list_oncall_events is called, Then it returns the events covering now, each with the on-call user name and the shift's start/end time",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_oncall.py::test_list_oncall_events_default_schedule_now"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_oncall.py::test_list_oncall_events_default_schedule_now PASSED. Asserts GET .../on-calls/default/events and the event_id/user_name/starts_at/ends_at mapping."
+  },
+  {
+    "id": "TC-BS-020",
+    "ac": "AC11",
+    "text": "Given a schedule_id that does not exist, When betterstack_list_oncall_events is called, Then it returns a not_found error envelope",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_oncall.py::test_list_oncall_events_unknown_schedule_not_found"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_oncall.py::test_list_oncall_events_unknown_schedule_not_found PASSED."
+  },
+  {
+    "id": "TC-BS-021",
+    "ac": "AC12",
+    "text": "Given a /mcp request with no X-Betterstack-Api-Token header, When any tool is invoked, Then the middleware returns HTTP 401 listing the required header name(s) before any tool code runs",
+    "type": "auto",
+    "tests": [
+      "tests/test_middleware.py::test_missing_credential_header_returns_401_with_header_name"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/test_middleware.py::test_missing_credential_header_returns_401_with_header_name PASSED. Also confirmed live over real HTTP (2026-11-02, docker container on :8912 and uvicorn dev run on :8911): curl -X POST /mcp with no header -> HTTP/1.1 401 Unauthorized, body {\"error\":\"Missing required header: X-Betterstack-Api-Token\",\"required_headers\":[\"X-Betterstack-Api-Token\"]}; the middleware returned before the streamable-HTTP app ever ran (no MCP session/initialize handshake occurred)."
+  },
+  {
+    "id": "TC-BS-022",
+    "ac": "AC13",
+    "text": "Given the upstream API returns 401 for the supplied token, When a tool calls it, Then the tool returns {\"error\":{\"code\":\"unauthorized\",\"retryable\":false}}",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_error_mapping.py::test_upstream_401_maps_to_unauthorized"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_error_mapping.py::test_upstream_401_maps_to_unauthorized PASSED. Also confirmed live against the real BetterStack API (2026-11-02, docker container, placeholder token): tools/call betterstack_list_oncall_schedules returned content[0].text == '{\"error\":{\"code\":\"unauthorized\",\"message\":\"BetterStack API returned HTTP 401 for GET /api/v2/on-calls\",\"retryable\":false}}' -- the real API's 401 for an invalid token mapped correctly end-to-end through the running container."
+  },
+  {
+    "id": "TC-BS-023",
+    "ac": "AC14",
+    "text": "Given the upstream API returns 429, When a tool calls it, Then after respecting Retry-After and the configured retry budget it returns {\"error\":{\"code\":\"rate_limited\",\"retryable\":true}} if still failing",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_error_mapping.py::test_upstream_429_retries_then_rate_limited"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_error_mapping.py::test_upstream_429_retries_then_rate_limited PASSED. Mocks Retry-After: 0 and asserts the client retried MAX_RETRIES=3 times (route.call_count == 4 total attempts) before returning rate_limited/retryable=true."
+  },
+  {
+    "id": "TC-BS-024",
+    "ac": "AC14",
+    "text": "Given the upstream API times out or returns 5xx, When a tool calls it, Then it returns {\"error\":{\"code\":\"upstream_error\",\"retryable\":true}} and the message does not include the raw upstream response body",
+    "type": "auto",
+    "tests": [
+      "tests/tools/test_error_mapping.py::test_upstream_5xx_and_timeout_map_to_upstream_error"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/tools/test_error_mapping.py::test_upstream_5xx_and_timeout_map_to_upstream_error PASSED. Covers both a 500 response carrying a fake internal-trace body (asserted absent from our error message) and an httpx.ReadTimeout side effect; both map to upstream_error/retryable=true."
+  },
+  {
+    "id": "TC-BS-025",
+    "ac": "AC15",
+    "text": "Given two concurrent /mcp requests carrying different tenants' X-Betterstack-Api-Token values, When both are in flight at once, Then each request's outbound call uses only its own token and neither response contains data fetched with the other tenant's token (no module-level cache, no global credential variable)",
+    "type": "auto",
+    "tests": [
+      "tests/test_middleware.py::test_concurrent_requests_do_not_leak_credentials_across_tenants"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/test_middleware.py::test_concurrent_requests_do_not_leak_credentials_across_tenants PASSED. Fires 20 concurrent requests (asyncio.gather) each carrying a distinct token through the real CredentialMiddleware + ContextVar, with explicit await asyncio.sleep(0) yield points inside the handler to force interleaving; asserts each response echoes exactly its own request's token, none crossed over."
+  },
+  {
+    "id": "TC-BS-026",
+    "ac": "AC16",
+    "text": "Given a tool call is made and logged, When the captured structured log output is inspected, Then it contains no Authorization/X-Betterstack-Api-Token value and no full upstream response body",
+    "type": "auto",
+    "tests": [
+      "tests/test_logging.py::test_logs_never_contain_the_credential_header_value"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/test_logging.py::test_logs_never_contain_the_credential_header_value PASSED. Triggers a 429-then-200 retry sequence (so api_client.py logs a warning) with a secret-looking body fragment injected into the mocked 429 response; caplog-captured text contains neither the test token, 'Bearer <token>', nor the body fragment."
+  },
+  {
+    "id": "TC-BS-027",
+    "ac": "AC17",
+    "text": "Given the upstream BetterStack API is unreachable, When GET /health is called, Then it still returns HTTP 200 with body {\"status\":\"ok\"} because the probe is purely local",
+    "type": "auto",
+    "tests": [
+      "tests/test_health.py::test_health_is_local_and_independent_of_upstream"
+    ],
+    "result": "pass",
+    "evidence": "uv run pytest -v: tests/test_health.py::test_health_is_local_and_independent_of_upstream PASSED (no respx mock installed in this test at all -- a real network attempt would raise, not silently 200). Also confirmed live: curl http://127.0.0.1:8911/health and the docker container on :8912 both returned HTTP 200 {\"status\":\"ok\"} with no BetterStack credential supplied."
+  },
+  {
+    "id": "TC-BS-028",
+    "ac": "AC1",
+    "type": "manual",
+    "text": "End-to-end smoke against a real BetterStack team token: initialize -> tools/list -> tools/call for betterstack_list_monitors and betterstack_list_oncall_schedules",
+    "steps": [
+      "Obtain a real BetterStack API token (Global or team-scoped) from a BetterStack account",
+      "Run the container locally per README with MCP_HTTP_PORT=8080",
+      "curl POST /mcp with header X-Betterstack-Api-Token: <token>, body {\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",...} then {\"method\":\"tools/list\"}",
+      "curl POST /mcp tools/call for betterstack_list_monitors with no args, then betterstack_list_oncall_schedules with no args"
+    ],
+    "expect": "tools/list returns all 11 betterstack_* tools with non-empty descriptions; both tools/call responses are HTTP 200 with a JSON body containing a data-shaped list (possibly empty if the team has no monitors/schedules yet), not an error envelope",
+    "result": "untested",
+    "notes": "needs a real vendor account; not a release blocker per vendor-mcp-development SOP section 'no test account required to publish to INT'. Partially exercised on 2026-11-02 with a placeholder token against the live betterstack.com API (docker container on :8912): tools/list returned 200 with all 11 tools over a real network hop (confirms stateless_http works end-to-end against the real host, not just respx), and tools/call betterstack_list_oncall_schedules got a real 401 from BetterStack correctly mapped to our unauthorized envelope (see TC-BS-022 evidence) -- confirms wiring and error-mapping against the live API, but not the happy-path data shape. Run the full steps above once a real token is available and update this result."
+  }
+]
